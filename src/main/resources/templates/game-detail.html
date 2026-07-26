@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head(${game.title})}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="max-w-7xl mx-auto px-4 py-10">
+    <div class="grid md:grid-cols-3 gap-10">
+        <div>
+            <img th:src="${game.coverImageUrl}" th:alt="${game.title}"
+                 class="w-full rounded-2xl border border-purple-900/30 neon-glow"/>
+        </div>
+        <div class="md:col-span-2">
+            <h1 class="text-4xl font-bold mb-2" th:text="${game.title}">Game Title</h1>
+            <div class="flex flex-wrap gap-3 mb-6">
+                <span class="px-3 py-1 bg-purple-900/40 rounded-full text-gneon text-sm" th:text="${game.genre}">Genre</span>
+                <span class="text-yellow-400" th:text="'★ ' + ${game.rating} + '/10'">★ 9.0</span>
+                <span class="text-gray-400 text-sm" th:text="${game.availableOnPlan} + ' tier'">PREMIUM tier</span>
+            </div>
+            <p class="text-gray-300 leading-relaxed mb-8" th:text="${game.description}">Description</p>
+
+            <dl class="grid grid-cols-2 gap-4 text-sm mb-8">
+                <div><dt class="text-gray-500">Developer</dt><dd th:text="${game.developer}">Dev</dd></div>
+                <div><dt class="text-gray-500">Publisher</dt><dd th:text="${game.publisher}">Pub</dd></div>
+                <div><dt class="text-gray-500">Release Year</dt><dd th:text="${game.releaseYear}">2024</dd></div>
+                <div><dt class="text-gray-500">Platforms</dt><dd th:text="${#strings.listJoin(game.platforms, ', ')}">PC</dd></div>
+            </dl>
+
+            <div class="relative inline-block group">
+                <button th:disabled="${!canPlay}"
+                        th:class="${canPlay} ? 'px-8 py-3 bg-gaccent rounded-xl font-semibold hover:bg-purple-700 transition neon-glow' : 'px-8 py-3 bg-gray-700 rounded-xl font-semibold cursor-not-allowed opacity-60'">
+                    Play Now
+                </button>
+                <div th:if="${!canPlay}" class="absolute bottom-full left-0 mb-2 hidden group-hover:block w-64 p-3 bg-gcard border border-purple-800/50 rounded-lg text-sm text-gray-300">
+                    Upgrade your subscription plan to access this game.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="mt-16" th:if="${!similarGames.isEmpty()}">
+        <h2 class="text-2xl font-bold mb-6">Similar Games</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a th:each="g : ${similarGames}" th:href="@{/games/{id}(id=${g.id})}" th:if="${g.id != game.id}"
+               class="bg-gcard rounded-xl overflow-hidden card-hover border border-purple-900/20">
+                <img th:src="${g.coverImageUrl}" class="w-full h-32 object-cover"/>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate" th:text="${g.title}">Game</h3>
+                </div>
+            </a>
+        </div>
+    </section>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Catalog')}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="flex flex-1 max-w-7xl mx-auto w-full px-4 py-8 gap-8">
+    <aside class="hidden md:block w-56 shrink-0">
+        <div class="bg-gcard rounded-xl p-5 border border-purple-900/30 sticky top-24">
+            <h3 class="font-semibold text-gneon mb-4">Filters</h3>
+            <form method="get" action="/catalog" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Search</label>
+                    <input type="text" name="q" th:value="${searchQuery}"
+                           class="w-full mt-1 px-3 py-2 bg-gbg border border-purple-800/50 rounded-lg text-sm"/>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Genre</label>
+                    <select name="genre" class="w-full mt-1 px-3 py-2 bg-gbg border border-purple-800/50 rounded-lg text-sm">
+                        <option value="">All</option>
+                        <option th:each="g : ${genres}" th:value="${g}" th:text="${g}" th:selected="${g == selectedGenre}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Platform</label>
+                    <select name="platform" class="w-full mt-1 px-3 py-2 bg-gbg border border-purple-800/50 rounded-lg text-sm">
+                        <option value="">All</option>
+                        <option th:each="p : ${platforms}" th:value="${p}" th:text="${p}" th:selected="${p == selectedPlatform}"></option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 uppercase">Plan Tier</label>
+                    <select name="plan" class="w-full mt-1 px-3 py-2 bg-gbg border border-purple-800/50 rounded-lg text-sm">
+                        <option value="">All</option>
+                        <option th:each="pl : ${plans}" th:value="${pl}" th:text="${pl}" th:selected="${pl == selectedPlan}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="w-full py-2 bg-gaccent rounded-lg text-sm hover:bg-purple-700">Apply</button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="flex-1">
+        <h1 class="text-3xl font-bold mb-6">Game Catalog</h1>
+        <p class="text-gray-400 mb-6" th:text="${games.totalElements} + ' games found'">0 games</p>
+
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <a th:each="game : ${games.content}" th:href="@{/games/{id}(id=${game.id})}"
+               class="bg-gcard rounded-xl overflow-hidden card-hover border border-purple-900/20">
+                <img th:src="${game.coverImageUrl}" th:alt="${game.title}" class="w-full h-48 object-cover"/>
+                <div class="p-4">
+                    <h3 class="font-semibold truncate" th:text="${game.title}">Title</h3>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-xs px-2 py-1 bg-purple-900/40 rounded text-gneon" th:text="${game.genre}">Genre</span>
+                        <span class="text-yellow-400 text-sm" th:text="'★ ' + ${game.rating}">★ 8.0</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="flex justify-center gap-2 mt-8" th:if="${games.totalPages > 1}">
+            <a th:if="${games.hasPrevious()}" th:href="@{/catalog(page=${games.number - 1}, genre=${selectedGenre}, platform=${selectedPlatform}, plan=${selectedPlan}, q=${searchQuery})}"
+               class="px-4 py-2 bg-gcard rounded-lg border border-purple-800/50 hover:bg-purple-900/30">Prev</a>
+            <span class="px-4 py-2 text-gray-400" th:text="'Page ' + (${games.number} + 1) + ' of ' + ${games.totalPages}">Page 1</span>
+            <a th:if="${games.hasNext()}" th:href="@{/catalog(page=${games.number + 1}, genre=${selectedGenre}, platform=${selectedPlatform}, plan=${selectedPlan}, q=${searchQuery})}"
+               class="px-4 py-2 bg-gcard rounded-lg border border-purple-800/50 hover:bg-purple-900/30">Next</a>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

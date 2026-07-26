@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: gameflix
+      POSTGRES_USER: gameflix
+      POSTGRES_PASSWORD: gameflix_pass
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  app:
+    build: .
+    ports: ["8080:8080"]
+    depends_on: [db]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/gameflix
+      SPRING_DATASOURCE_USERNAME: gameflix
+      SPRING_DATASOURCE_PASSWORD: gameflix_pass
+      JWT_SECRET: change_me_in_production_must_be_32_chars
+      SPRING_PROFILES_ACTIVE: prod
+
+volumes:
+  pgdata:

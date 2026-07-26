@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Manage Games')}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="flex flex-1">
+    <div th:replace="~{layout :: sidebar}"></div>
+    <div class="flex-1 p-6 lg:p-10">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Manage Games</h1>
+            <button onclick="showAddModal()" class="px-4 py-2 bg-gaccent rounded-lg hover:bg-purple-700">Add Game</button>
+        </div>
+
+        <input type="text" id="gameSearch" placeholder="Search games..." onkeyup="filterGames()"
+               class="w-full max-w-md px-4 py-2 mb-6 bg-gcard border border-purple-800/50 rounded-lg"/>
+
+        <div class="bg-gcard rounded-xl border border-purple-900/30 overflow-x-auto">
+            <table class="w-full text-sm" id="gamesTable">
+                <thead class="bg-gbg">
+                    <tr class="text-gray-400">
+                        <th class="text-left px-4 py-3">Title</th>
+                        <th class="text-left px-4 py-3">Genre</th>
+                        <th class="text-left px-4 py-3">Rating</th>
+                        <th class="text-left px-4 py-3">Plan</th>
+                        <th class="text-right px-4 py-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="game : ${games}" class="border-t border-purple-900/20 game-row">
+                        <td class="px-4 py-3 game-title" th:text="${game.title}">Title</td>
+                        <td class="px-4 py-3" th:text="${game.genre}">Genre</td>
+                        <td class="px-4 py-3 text-yellow-400" th:text="${game.rating}">8.0</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 bg-purple-900/40 rounded text-xs" th:text="${game.availableOnPlan}">BASIC</span></td>
+                        <td class="px-4 py-3 text-right">
+                            <a th:href="@{/games/{id}(id=${game.id})}" class="text-gneon hover:underline mr-3">View</a>
+                            <button th:onclick="'editGame(' + ${game.id} + ')'" class="text-yellow-400 hover:underline">Edit</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="addModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+    <div class="bg-gcard rounded-2xl p-8 max-w-lg w-full border border-purple-900/30 mx-4">
+        <h3 class="text-xl font-bold mb-6">Add New Game</h3>
+        <form id="addGameForm" class="space-y-4">
+            <input type="text" id="gTitle" placeholder="Title" required class="w-full px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"/>
+            <input type="text" id="gGenre" placeholder="Genre" required class="w-full px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"/>
+            <textarea id="gDesc" placeholder="Description" required class="w-full px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"></textarea>
+            <input type="text" id="gDev" placeholder="Developer" required class="w-full px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"/>
+            <input type="text" id="gPub" placeholder="Publisher" required class="w-full px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"/>
+            <div class="flex gap-4">
+                <input type="number" id="gYear" placeholder="Year" required class="flex-1 px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"/>
+                <input type="number" id="gRating" placeholder="Rating" step="0.1" required class="flex-1 px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg"/>
+            </div>
+            <select id="gPlan" class="w-full px-4 py-2 bg-gbg border border-purple-800/50 rounded-lg">
+                <option value="BASIC">Basic</option>
+                <option value="STANDARD">Standard</option>
+                <option value="PREMIUM">Premium</option>
+            </select>
+            <div class="flex gap-3">
+                <button type="submit" class="flex-1 py-2 bg-gaccent rounded-lg hover:bg-purple-700">Save</button>
+                <button type="button" onclick="hideAddModal()" class="flex-1 py-2 border border-purple-700 rounded-lg">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function filterGames() {
+    const q = document.getElementById('gameSearch').value.toLowerCase();
+    document.querySelectorAll('.game-row').forEach(row => {
+        row.style.display = row.querySelector('.game-title').textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+function showAddModal() { document.getElementById('addModal').classList.replace('hidden', 'flex'); }
+function hideAddModal() { document.getElementById('addModal').classList.replace('flex', 'hidden'); }
+function editGame(id) { alert('Use the REST API PUT /api/games/' + id + ' with admin token to edit.'); }
+
+document.getElementById('addGameForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('gameflix_admin_token') || localStorage.getItem('gameflix_token');
+    if (!token) { alert('Admin JWT token required. Login via API first.'); return; }
+    const payload = {
+        title: document.getElementById('gTitle').value,
+        genre: document.getElementById('gGenre').value,
+        description: document.getElementById('gDesc').value,
+        developer: document.getElementById('gDev').value,
+        publisher: document.getElementById('gPub').value,
+        releaseYear: parseInt(document.getElementById('gYear').value),
+        rating: parseFloat(document.getElementById('gRating').value),
+        coverImageUrl: 'https://picsum.photos/seed/newgame/400/600',
+        platforms: ['PC'],
+        availableOnPlan: document.getElementById('gPlan').value
+    };
+    const res = await fetch('/api/games', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    if (res.ok) location.reload();
+    else alert('Failed to create game.');
+});
+</script>
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

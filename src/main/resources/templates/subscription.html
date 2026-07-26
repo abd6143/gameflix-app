@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Subscription')}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="flex flex-1">
+    <div th:replace="~{layout :: sidebar}"></div>
+    <div class="flex-1 p-6 lg:p-10 max-w-5xl">
+        <h1 class="text-3xl font-bold mb-8">My Subscription</h1>
+
+        <div th:if="${subscription != null}" class="bg-gcard rounded-2xl p-8 border border-purple-900/30 mb-10">
+            <div class="flex justify-between items-start flex-wrap gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-gneon" th:text="${subscription.planName}">Standard</h2>
+                    <p class="text-3xl font-extrabold mt-2" th:text="'$' + ${subscription.planPrice} + '/mo'">$9.99/mo</p>
+                    <span class="inline-block mt-3 px-3 py-1 rounded-full text-xs font-semibold"
+                          th:classappend="${subscription.status.name() == 'ACTIVE'} ? 'bg-emerald-900/50 text-emerald-400' : 'bg-yellow-900/50 text-yellow-400'"
+                          th:text="${subscription.status}">ACTIVE</span>
+                </div>
+                <div class="text-sm text-gray-400">
+                    <p th:text="'Started: ' + ${subscription.startDate}">Started</p>
+                    <p th:text="'Next billing: ' + ${subscription.endDate}">Billing</p>
+                    <p th:text="${subscription.autoRenew} ? 'Auto-renew: On' : 'Auto-renew: Off'">Auto-renew</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 mt-8">
+                <button onclick="subscriptionAction('pause')" class="px-4 py-2 border border-yellow-600 text-yellow-400 rounded-lg hover:bg-yellow-900/20">Pause</button>
+                <button onclick="confirmCancel()" class="px-4 py-2 border border-red-600 text-red-400 rounded-lg hover:bg-red-900/20">Cancel</button>
+                <button onclick="subscriptionAction('reactivate')" class="px-4 py-2 border border-emerald-600 text-emerald-400 rounded-lg hover:bg-emerald-900/20">Reactivate</button>
+            </div>
+        </div>
+
+        <div th:if="${subscription == null}" class="bg-gcard rounded-2xl p-8 border border-purple-900/30 mb-10 text-center">
+            <p class="text-gray-400 mb-4">You don't have a subscription yet.</p>
+        </div>
+
+        <h2 class="text-xl font-bold mb-4">Available Plans</h2>
+        <div class="grid md:grid-cols-3 gap-4 mb-10">
+            <div th:each="plan : ${plans}" class="bg-gcard rounded-xl p-6 border border-purple-900/30">
+                <h3 class="font-bold text-gneon" th:text="${plan.name}">Basic</h3>
+                <p class="text-2xl font-bold mt-2" th:text="'$' + ${plan.price}">$4.99</p>
+                <button th:onclick="'upgradePlan(' + ${plan.id} + ')'"
+                        class="mt-4 w-full py-2 bg-gaccent rounded-lg text-sm hover:bg-purple-700">
+                    Select Plan
+                </button>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-bold mb-4">Billing History</h2>
+        <div class="bg-gcard rounded-xl border border-purple-900/30 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-gbg">
+                    <tr>
+                        <th class="text-left px-4 py-3 text-gray-400">Date</th>
+                        <th class="text-left px-4 py-3 text-gray-400">Description</th>
+                        <th class="text-right px-4 py-3 text-gray-400">Amount</th>
+                        <th class="text-right px-4 py-3 text-gray-400">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-t border-purple-900/20">
+                        <td class="px-4 py-3">2026-05-01</td>
+                        <td class="px-4 py-3">Monthly subscription</td>
+                        <td class="px-4 py-3 text-right">$9.99</td>
+                        <td class="px-4 py-3 text-right text-emerald-400">Paid</td>
+                    </tr>
+                    <tr class="border-t border-purple-900/20">
+                        <td class="px-4 py-3">2026-04-01</td>
+                        <td class="px-4 py-3">Monthly subscription</td>
+                        <td class="px-4 py-3 text-right">$9.99</td>
+                        <td class="px-4 py-3 text-right text-emerald-400">Paid</td>
+                    </tr>
+                    <tr class="border-t border-purple-900/20">
+                        <td class="px-4 py-3">2026-03-01</td>
+                        <td class="px-4 py-3">Monthly subscription</td>
+                        <td class="px-4 py-3 text-right">$9.99</td>
+                        <td class="px-4 py-3 text-right text-emerald-400">Paid</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="cancelModal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+    <div class="bg-gcard rounded-2xl p-8 max-w-md border border-purple-900/30">
+        <h3 class="text-xl font-bold mb-4">Cancel Subscription?</h3>
+        <p class="text-gray-400 mb-6">You'll lose access to premium games at the end of your billing period.</p>
+        <div class="flex gap-3">
+            <button onclick="subscriptionAction('cancel')" class="flex-1 py-2 bg-red-600 rounded-lg hover:bg-red-700">Confirm Cancel</button>
+            <button onclick="hideCancelModal()" class="flex-1 py-2 border border-purple-700 rounded-lg hover:bg-purple-900/30">Keep Plan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function getToken() { return localStorage.getItem('gameflix_token'); }
+
+async function subscriptionAction(action) {
+    const token = getToken();
+    if (!token) { alert('Please login via API or use the web dashboard.'); return; }
+    const res = await fetch('/api/subscriptions/my/' + action, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+    });
+    if (res.ok) location.reload();
+    else alert('Action failed. You may need to authenticate via the REST API.');
+}
+
+async function upgradePlan(planId) {
+    const token = getToken();
+    const endpoint = token ? '/api/subscriptions/my/upgrade' : null;
+    if (!token) {
+        const subRes = await fetch('/api/subscriptions/subscribe', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ planId })
+        });
+        if (subRes.ok) location.reload();
+        else alert('Please log in to manage your subscription.');
+        return;
+    }
+    const res = await fetch(endpoint, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId })
+    });
+    if (res.ok) location.reload();
+    else alert('Plan change failed.');
+}
+
+function confirmCancel() {
+    document.getElementById('cancelModal').classList.remove('hidden');
+    document.getElementById('cancelModal').classList.add('flex');
+}
+function hideCancelModal() {
+    document.getElementById('cancelModal').classList.add('hidden');
+    document.getElementById('cancelModal').classList.remove('flex');
+}
+</script>
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

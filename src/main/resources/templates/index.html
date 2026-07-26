@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout :: head('Home')}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<section class="relative overflow-hidden py-24 px-4">
+    <div class="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-transparent"></div>
+    <div class="max-w-7xl mx-auto text-center relative z-10">
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-6">
+            Your Games. <span class="text-gneon">One Subscription.</span>
+        </h1>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto mb-10">
+            Stream hundreds of games across every genre. Pick a plan, start playing instantly.
+        </p>
+        <div class="flex gap-4 justify-center flex-wrap">
+            <a href="/register" class="px-8 py-3 bg-gaccent rounded-xl font-semibold hover:bg-purple-700 transition neon-glow">Start Free Trial</a>
+            <a href="/catalog" class="px-8 py-3 border border-gneon text-gneon rounded-xl font-semibold hover:bg-purple-900/30 transition">Browse Catalog</a>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 px-4 max-w-7xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-12">Choose Your Plan</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+        <div th:each="plan : ${plans}" class="bg-gcard rounded-2xl p-8 border border-purple-900/30 card-hover"
+             th:classappend="${plan.name == 'Standard'} ? 'neon-glow border-gaccent' : ''">
+            <h3 class="text-2xl font-bold text-gneon" th:text="${plan.name}">Basic</h3>
+            <p class="text-4xl font-extrabold mt-4" th:text="'$' + ${plan.price}">$4.99</p>
+            <p class="text-gray-400 mt-2 text-sm" th:text="${plan.description}">Description</p>
+            <ul class="mt-6 space-y-2 text-sm text-gray-300">
+                <li th:text="'Up to ' + ${plan.maxDevices} + ' device(s)'">1 device</li>
+                <li th:text="${plan.downloadAllowed} ? 'Offline downloads included' : 'Streaming only'">Streaming only</li>
+            </ul>
+            <a href="/register" class="mt-8 block text-center py-3 rounded-xl font-semibold transition"
+               th:classappend="${plan.name == 'Standard'} ? 'bg-gaccent hover:bg-purple-700' : 'border border-purple-700 hover:bg-purple-900/30'">
+                Get Started
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="py-16 px-4 bg-gcard/50">
+    <div class="max-w-7xl mx-auto">
+        <h2 class="text-3xl font-bold mb-8">Featured Games</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <a th:each="game : ${featuredGames}" th:href="@{/games/{id}(id=${game.id})}"
+               class="bg-gcard rounded-xl overflow-hidden card-hover border border-purple-900/20">
+                <img th:src="${game.coverImageUrl}" th:alt="${game.title}" class="w-full h-40 object-cover"/>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate" th:text="${game.title}">Game</h3>
+                    <p class="text-xs text-yellow-400 mt-1" th:text="'★ ' + ${game.rating}">★ 9.0</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

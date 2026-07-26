@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Dashboard')}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="flex flex-1">
+    <div th:replace="~{layout :: sidebar}"></div>
+    <div class="flex-1 p-6 lg:p-10">
+        <h1 class="text-3xl font-bold mb-2">Welcome back, <span class="text-gneon" th:text="${user.username}">Gamer</span>!</h1>
+        <p class="text-gray-400 mb-8">Here's what's happening with your account.</p>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-10">
+            <div class="bg-gcard rounded-2xl p-6 border border-purple-900/30">
+                <h2 class="text-lg font-semibold text-gneon mb-4">Subscription Status</h2>
+                <div th:if="${subscription != null}">
+                    <p class="text-2xl font-bold" th:text="${subscription.planName}">Standard</p>
+                    <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold"
+                          th:classappend="${subscription.status.name() == 'ACTIVE'} ? 'bg-emerald-900/50 text-emerald-400' : 'bg-yellow-900/50 text-yellow-400'"
+                          th:text="${subscription.status}">ACTIVE</span>
+                    <p class="text-sm text-gray-400 mt-3" th:text="'Renews: ' + ${subscription.endDate}">Renews</p>
+                </div>
+                <div th:if="${subscription == null}">
+                    <p class="text-gray-400">No active subscription.</p>
+                    <a href="/subscription" class="inline-block mt-4 px-4 py-2 bg-gaccent rounded-lg text-sm hover:bg-purple-700">Subscribe Now</a>
+                </div>
+            </div>
+            <div class="bg-gcard rounded-2xl p-6 border border-purple-900/30">
+                <h2 class="text-lg font-semibold text-gneon mb-4">Quick Actions</h2>
+                <div class="space-y-3">
+                    <a href="/catalog" class="block px-4 py-3 bg-gbg rounded-lg hover:bg-purple-900/30 transition">Browse Catalog</a>
+                    <a href="/subscription" class="block px-4 py-3 bg-gbg rounded-lg hover:bg-purple-900/30 transition">Manage Subscription</a>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-bold mb-4">Recently Added</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a th:each="game : ${recentGames}" th:href="@{/games/{id}(id=${game.id})}"
+               class="bg-gcard rounded-xl overflow-hidden card-hover border border-purple-900/20">
+                <img th:src="${game.coverImageUrl}" th:alt="${game.title}" class="w-full h-32 object-cover"/>
+                <div class="p-3">
+                    <h3 class="font-semibold text-sm truncate" th:text="${game.title}">Game</h3>
+                    <span class="text-xs text-purple-400" th:text="${game.genre}">Genre</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>

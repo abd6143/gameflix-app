@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('Manage Users')}"></head>
+<body class="min-h-screen flex flex-col">
+<div th:replace="~{layout :: navbar}"></div>
+
+<div class="flex flex-1">
+    <div th:replace="~{layout :: sidebar}"></div>
+    <div class="flex-1 p-6 lg:p-10">
+        <h1 class="text-3xl font-bold mb-8">Manage Users</h1>
+
+        <div class="bg-gcard rounded-xl border border-purple-900/30 overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gbg">
+                    <tr class="text-gray-400">
+                        <th class="text-left px-4 py-3">Username</th>
+                        <th class="text-left px-4 py-3">Email</th>
+                        <th class="text-left px-4 py-3">Role</th>
+                        <th class="text-left px-4 py-3">Subscription</th>
+                        <th class="text-right px-4 py-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="u : ${users}" class="border-t border-purple-900/20">
+                        <td class="px-4 py-3" th:text="${u.username}">user</td>
+                        <td class="px-4 py-3 text-gray-400" th:text="${u.email}">email</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 rounded text-xs"
+                                  th:classappend="${u.role.name() == 'ADMIN'} ? 'bg-red-900/40 text-red-400' : 'bg-purple-900/40 text-gneon'"
+                                  th:text="${u.role}">USER</span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span th:if="${u.subscriptionStatus != null}" th:text="${u.subscriptionStatus} + ' (' + ${u.planName} + ')'">ACTIVE</span>
+                            <span th:if="${u.subscriptionStatus == null}" class="text-gray-500">None</span>
+                        </td>
+                        <td class="px-4 py-3 text-right space-x-2">
+                            <button th:onclick="'changeRole(' + ${u.id} + ', \'' + ${u.role} + '\')'" class="text-gneon hover:underline">Edit Role</button>
+                            <button th:onclick="'deleteUser(' + ${u.id} + ')'" class="text-red-400 hover:underline">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function getAdminToken() { return localStorage.getItem('gameflix_admin_token') || localStorage.getItem('gameflix_token'); }
+
+async function changeRole(userId, currentRole) {
+    const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
+    const token = getAdminToken();
+    if (!token) { alert('Admin JWT required.'); return; }
+    const res = await fetch('/api/admin/users/' + userId + '/role', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+    });
+    if (res.ok) location.reload();
+    else alert('Failed to update role.');
+}
+
+async function deleteUser(userId) {
+    if (!confirm('Delete this user?')) return;
+    const token = getAdminToken();
+    if (!token) { alert('Admin JWT required.'); return; }
+    const res = await fetch('/api/admin/users/' + userId, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) location.reload();
+    else alert('Failed to delete user.');
+}
+</script>
+<div th:replace="~{layout :: footer}"></div>
+</body>
+</html>
